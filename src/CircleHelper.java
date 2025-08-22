@@ -6,7 +6,7 @@ import java.util.HashMap;
 
 public class CircleHelper {
 
-    private static HashMap<Integer, ArrayList<Integer>>[] circles; // array of hashmaps containing <x, array of y's> of it's circle. circles[radius]. the circle is stored as points, 1 pixel thick, that make up the circle, the center of the circling being (0, 0).
+    private static HashMap<Integer, ArrayList<Integer>>[] circles; // array of hashmaps containing <x, array of y's> of it's circle. circles[radius]. the circle is stored as points, 1 pixel thick, that make up the circle, the center of the circling being (0, 0). it does NOT store an image since thats a waste of memory.
 //    private static ArrayList<Point>[] circles;
 
     public static void init() {
