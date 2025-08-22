@@ -10,12 +10,21 @@ public class GraphicsJPanel extends JPanel {
 
     public GraphicsJPanel(JFrame jFrame) {
 
+        super();
         this.jFrame = jFrame;
-        this.bufferedImage = new BufferedImage(jFrame.getWidth(), jFrame.getHeight(), BufferedImage.TYPE_INT_RGB);
-        this.bufferedImage_graphics2D = bufferedImage.createGraphics();
+        this.bufferedImage = null;
+        this.bufferedImage_graphics2D = null;
+        newBufferedImageStuff();
 
-        clear();
+    }
 
+    public void newBufferedImageStuff() {
+        if (bufferedImage != null && bufferedImage_graphics2D != null) {
+            bufferedImage_graphics2D.dispose();
+        }
+        bufferedImage = new BufferedImage(jFrame.getWidth(), jFrame.getHeight(), BufferedImage.TYPE_INT_RGB);
+        bufferedImage_graphics2D = bufferedImage.createGraphics();
+//        clear();
     }
 
     public void clear() {

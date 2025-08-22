@@ -7,11 +7,14 @@ public class Main {
 
     public static void main(String[] args) {
 
+        int jframeLastWidth = 1280;
+        int jframeLastHeight = 720;
+
         JFrame jframe = new JFrame();
-        jframe.setSize(new Dimension(1280, 720));
+        jframe.setSize(jframeLastWidth, jframeLastHeight);
         jframe.getContentPane().setBackground(Color.CYAN);
         jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        jframe.setResizable(false);
+        jframe.setResizable(true);
         jframe.addMouseListener(new MouseHelper());
 
         GraphicsJPanel graphicsJPanel = new GraphicsJPanel(jframe);
@@ -27,7 +30,16 @@ public class Main {
 
             startMillis = System.currentTimeMillis();
 
-            graphicsJPanel.clear();
+            // check for resize
+            if (jframe.getWidth() != jframeLastWidth || jframe.getHeight() != jframeLastHeight) {
+                graphicsJPanel.newBufferedImageStuff();
+                jframeLastWidth = jframe.getWidth();
+                jframeLastHeight = jframe.getHeight();
+            } else {
+                graphicsJPanel.clear();
+            }
+
+//            jframe.setLocation((int) (Math.cos(System.currentTimeMillis() %1300L /1300f *3.1416 *2) *300 +300), (int) (Math.sin(System.currentTimeMillis() %1300L /1300f *3.1416 *2) *300 +300)); // fun
 
 //            // TEST
 //            if (System.currentTimeMillis() %1000L /1000f > .5f) {
@@ -45,8 +57,10 @@ public class Main {
             // render something cool
             int width = graphicsJPanel.getWidth();
             int height = graphicsJPanel.getHeight();
-            int posX = width /2; // middle of circle
-            int posY = height /2; // middle of circle
+//            int posX = width /2; // middle of circle
+//            int posY = height /2; // middle of circle
+            int posX = (Toolkit.getDefaultToolkit().getScreenSize().width /2) -graphicsJPanel.getLocationOnScreen().x; // middle of circle
+            int posY = (Toolkit.getDefaultToolkit().getScreenSize().height /2) -graphicsJPanel.getLocationOnScreen().y; // middle of circle
 
             // set radius using time so its animated
             float radius = 0;
@@ -90,105 +104,121 @@ public class Main {
             // fill in the circle including the 2 circles themselves.
             graphicsJPanel.bufferedImage_graphics2D.setColor(circleColour);
 
-            // fill in left side
-            for (int x = posX -((int) radius); x <= posX -((int) innerRadius); x++) {
-                Integer highestY = null;
-                Integer lowestY = null;
-                for (Integer y : mainCircle.get(x -posX)) {
-                    if (highestY == null || lowestY == null) {
-                        highestY = y;
-                        lowestY = y;
-                    } else {
-                        if (y > highestY) {
-                            highestY = y;
-                        } else if (y < lowestY) {
-                            lowestY = y;
-                        }
-                    }
-                }
-                if (highestY != null && lowestY != null) {
-                    graphicsJPanel.bufferedImage_graphics2D.drawLine(x, posY -highestY, x, posY -lowestY);
-                }
-            }
-
-            // fill in right side
-            for (int x = posX +((int) innerRadius); x <= posX +((int) radius); x++) {
-                Integer highestY = null;
-                Integer lowestY = null;
-                for (Integer y : mainCircle.get(x -posX)) {
-                    if (highestY == null || lowestY == null) {
-                        highestY = y;
-                        lowestY = y;
-                    } else {
-                        if (y > highestY) {
-                            highestY = y;
-                        } else if (y < lowestY) {
-                            lowestY = y;
-                        }
-                    }
-                }
-                if (highestY != null && lowestY != null) {
-                    graphicsJPanel.bufferedImage_graphics2D.drawLine(x, posY -highestY, x, posY -lowestY);
-                }
-            }
-
             // fill in top side
-            for (int x = posX -(innerRadius_INT) +1; x <= posX +(innerRadius_INT) -1; x++) {
-                Integer outermostMainY = null; // outermost relative to the inside of the lines. i want to colour the circle points themselves.
-                Integer outermostInnerY = null;
-                for (Integer y : mainCircle.get(x -posX)) {
-                    if (outermostMainY == null) {
-                        outermostMainY = y;
+            for (int y = Math.min(Math.max(posY -radius_INT, 0), jframeLastHeight); y <= Math.min(Math.max(posY -innerRadius_INT, 0), jframeLastHeight); y+=1) { // y for the jpanel.
+                if (!mainCircle.containsKey(-(y -posY))) {
+                    continue;
+                }
+                Integer leftmostX = null;
+                Integer rightmostX = null;
+                for (Integer x : mainCircle.get(-(y -posY))) {
+                    if (leftmostX == null || rightmostX == null) {
+                        leftmostX = x;
+                        rightmostX = x;
                     } else {
-                        if (y > outermostMainY) {
-                            outermostMainY = y;
+                        if (x < leftmostX) {
+                            leftmostX = x;
+                        } else if (x > rightmostX) {
+                            rightmostX = x;
                         }
                     }
                 }
-                for (Integer y : innerCircle.get(x -posX)) {
-                    if (y < 0) {
+                if (leftmostX != null && rightmostX != null) {
+                    graphicsJPanel.bufferedImage_graphics2D.drawLine(posX +leftmostX, y, posX +rightmostX, y);
+                }
+            }
+
+            // fill in middle (left and right at same time by y level)
+            for (int y = Math.min(Math.max(posY -innerRadius_INT +1, 0), jframeLastHeight); y <= Math.min(Math.max(posY +innerRadius_INT -1, 0), jframeLastHeight); y+=1) {
+                if (!mainCircle.containsKey(-(y -posY))) {
+                    continue;
+                }
+                if (!innerCircle.containsKey(-(y -posY))) {
+                    continue;
+                }
+
+                Integer outermostMainX = null; // outermost relative to the inside of the lines. i want to colour the circle points themselves.
+                Integer outermostInnerX = null;
+
+                // left side of y-line
+                outermostMainX = null; // outermost relative to the inside of the lines. i want to colour the circle points themselves.
+                outermostInnerX = null;
+                for (Integer x : mainCircle.get(-(y -posY))) {
+                    if (outermostMainX == null) {
+                        outermostMainX = x;
+                    } else {
+                        if (x < outermostMainX) {
+                            outermostMainX = x;
+                        }
+                    }
+                }
+                for (Integer x : innerCircle.get(-(y -posY))) {
+                    if (x > 0) {
                         continue;
                     }
-                    if (outermostInnerY == null) {
-                        outermostInnerY = y;
+                    if (outermostInnerX == null) {
+                        outermostInnerX = x;
                     } else {
-                        if (y < outermostInnerY) {
-                            outermostInnerY = y;
+                        if (x > outermostInnerX) {
+                            outermostInnerX = x;
                         }
                     }
                 }
-                if (outermostMainY != null && outermostInnerY != null) {
-                    graphicsJPanel.bufferedImage_graphics2D.drawLine(x, posY -outermostMainY, x, posY -outermostInnerY);
+                if (outermostMainX != null && outermostInnerX != null) {
+                    graphicsJPanel.bufferedImage_graphics2D.drawLine(posX +outermostMainX, y, posX +outermostInnerX, y);
                 }
+
+                // right side of y-line
+                outermostMainX = null; // outermost relative to the inside of the lines. i want to colour the circle points themselves.
+                outermostInnerX = null;
+                for (Integer x : mainCircle.get(-(y -posY))) {
+                    if (outermostMainX == null) {
+                        outermostMainX = x;
+                    } else {
+                        if (x > outermostMainX) {
+                            outermostMainX = x;
+                        }
+                    }
+                }
+                for (Integer x : innerCircle.get(-(y -posY))) {
+                    if (x < 0) {
+                        continue;
+                    }
+                    if (outermostInnerX == null) {
+                        outermostInnerX = x;
+                    } else {
+                        if (x < outermostInnerX) {
+                            outermostInnerX = x;
+                        }
+                    }
+                }
+                if (outermostMainX != null && outermostInnerX != null) {
+                    graphicsJPanel.bufferedImage_graphics2D.drawLine(posX +outermostMainX, y, posX +outermostInnerX, y);
+                }
+
             }
 
             // fill in bottom side
-            for (int x = posX -(innerRadius_INT) +1; x <= posX +(innerRadius_INT) -1; x++) {
-                Integer outermostMainY = null;
-                Integer outermostInnerY = null;
-                for (Integer y : mainCircle.get(x -posX)) {
-                    if (outermostMainY == null) {
-                        outermostMainY = y;
+            for (int y = Math.min(Math.max(posY +innerRadius_INT, 0), jframeLastHeight); y <= Math.min(Math.max(posY +radius_INT, 0), jframeLastHeight); y+=1) { // y for the jpanel.
+                if (!mainCircle.containsKey(-(y -posY))) {
+                    continue;
+                }
+                Integer leftmostX = null;
+                Integer rightmostX = null;
+                for (Integer x : mainCircle.get(-(y -posY))) {
+                    if (leftmostX == null || rightmostX == null) {
+                        leftmostX = x;
+                        rightmostX = x;
                     } else {
-                        if (y < outermostMainY) {
-                            outermostMainY = y;
+                        if (x < leftmostX) {
+                            leftmostX = x;
+                        } else if (x > rightmostX) {
+                            rightmostX = x;
                         }
                     }
                 }
-                for (Integer y : innerCircle.get(x -posX)) {
-                    if (y > 0) {
-                        continue;
-                    }
-                    if (outermostInnerY == null) {
-                        outermostInnerY = y;
-                    } else {
-                        if (y > outermostInnerY) {
-                            outermostInnerY = y;
-                        }
-                    }
-                }
-                if (outermostMainY != null && outermostInnerY != null) {
-                    graphicsJPanel.bufferedImage_graphics2D.drawLine(x, posY -outermostInnerY, x, posY -outermostMainY);
+                if (leftmostX != null && rightmostX != null) {
+                    graphicsJPanel.bufferedImage_graphics2D.drawLine(posX +leftmostX, y, posX +rightmostX, y);
                 }
             }
 
