@@ -1,0 +1,1 @@
+extern __host__ __device__ long rowBytesAmountToPaddedRowBytesAmount(long rowBytesAmount);

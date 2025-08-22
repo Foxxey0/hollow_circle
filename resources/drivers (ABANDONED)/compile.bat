@@ -1,0 +1,1 @@
+cl.exe Driver.c /FeDriver.sys /link /subsystem:native /driver:wdm -entry:DriverEntry
