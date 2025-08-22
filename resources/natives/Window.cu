@@ -76,6 +76,7 @@ UINT16 fullscreenOriginalWidth = 200; // just some default values, just in case.
 UINT16 fullscreenOriginalHeight = 200;
 
 // for resizeSafely() to work. wait until bitmap is NOT being drawn to, before doing ANYTHING including resizing cuz that would break the bitmap drawing midway through. // - But even then, ALSO wait for setPosition to not be happening
+// by the way, the reason resizingSafely exists is so that i can resize the window from another thread. This is needed for the fullscreen thing because its triggered in the windowprocedure method, which runs in a different thread. But the manual resizing doesnt. the manual resizing happens in the same thread as the bitmap drawing, so that doesnt need a safety, its checked first.
 BOOL resizingSafely = FALSE;
 BOOL drawingToBitmap = FALSE;
 
