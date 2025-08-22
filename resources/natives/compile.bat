@@ -1,0 +1,1 @@
+nvcc Init.c Window.cu MathHelper.c CudaStuff.cu -o TestDLL.dll --shared -rdc=true --use_fast_math

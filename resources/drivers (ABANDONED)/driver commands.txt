@@ -1,0 +1,20 @@
+New-SelfSignedCertificate -Type CodeSigning -Subject "CN=foxxeysDriver" -CertStoreLocation "Cert:\LocalMachine\My"
+
+signtool sign /sm /n "foxxeysDriver" /t http://timestamp.digicert.com /fd SHA256 /v "C:\Users\Alex Game Account\Desktop\java proj\hollow circle proj 2\resources\drivers\driver.sys"
+
+sc create foxxeysDriver_service binPath= "C:\Users\Alex Game Account\Desktop\java proj\hollow circle proj 2\resources\drivers\driver.sys" type= kernel
+
+
+
+bcdedit.exe /set testsigning on
+
+sc start foxxeysDriver_service
+
+
+
+
+
+
+sc stop foxxeysDriver_service
+
+sc delete foxxeysDriver_service
