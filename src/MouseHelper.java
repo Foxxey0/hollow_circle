@@ -1,10 +1,11 @@
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.HashMap;
 
 public class MouseHelper implements MouseListener {
 
-    public static HashMap<Integer, Boolean> states;
+    public static HashMap<Integer, Boolean> states; // mouseButton, pressed
 
     public static void init() {
         states = new HashMap<Integer, Boolean>();
