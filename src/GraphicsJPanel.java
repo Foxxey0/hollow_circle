@@ -4,38 +4,32 @@ import java.awt.image.BufferedImage;
 
 public class GraphicsJPanel extends JPanel {
 
+    public BufferedImage bufferedImage;
     private JFrame jFrame;
-    private BufferedImage bufferedImage;
-    public Graphics2D bufferedImage_graphics2D;
 
     public GraphicsJPanel(JFrame jFrame) {
 
         this.jFrame = jFrame;
-        this.bufferedImage = new BufferedImage(jFrame.getWidth(), jFrame.getHeight(), BufferedImage.TYPE_INT_RGB);
-        this.bufferedImage_graphics2D = bufferedImage.createGraphics();
-
+        bufferedImage = new BufferedImage(jFrame.getWidth(), jFrame.getHeight(), BufferedImage.TYPE_INT_RGB);
         clear();
 
     }
 
     public void clear() {
-        bufferedImage_graphics2D.clearRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
+        Graphics2D graphics2D = bufferedImage.createGraphics();
+        graphics2D.clearRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
+        graphics2D.dispose();
     }
 
-    public void drawPixel(int x, int y, Color colour) {
-        if (x < 0) {
-            return;
-        }
-        if (x > getWidth() -1) {
-            return;
-        }
-        if (y < 0) {
-            return;
-        }
-        if (y > getHeight() -1) {
-            return;
-        }
-        bufferedImage.setRGB(x, y, colour.getRGB());
+    public void drawPixel(int x, int y, int colour) {
+        bufferedImage.setRGB(x, y, colour);
+    }
+
+    public void drawColumn(int x, int colour) {
+        Graphics2D graphics2D = bufferedImage.createGraphics();
+        graphics2D.setColor(new Color(colour));
+        graphics2D.fillRect(x, 0, 1, bufferedImage.getHeight());
+        graphics2D.dispose();
     }
 
     public void render() {

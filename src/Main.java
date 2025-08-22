@@ -1,7 +1,5 @@
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public class Main {
 
@@ -20,7 +18,6 @@ public class Main {
         jframe.setVisible(true);
 
         MouseHelper.init();
-        CircleHelper.init();
 
         long startMillis = System.currentTimeMillis();
         while (true) { // drawing and rendering
@@ -58,137 +55,46 @@ public class Main {
                 radius = MathHelper.interpolate_circular_slowFastSlow((progress -.5f) *2f, 500, 10);
             }
 
-            float borderWidth = 10f;
-            float innerRadius = Math.min(radius -borderWidth +1, radius);
+            AxisAlignedBoundingBox mainAABB = new AxisAlignedBoundingBox(posX -radius, posX +radius, posY -radius, posY +radius, width, height);
 
-            int radius_INT = (int) radius;
-            int innerRadius_INT = (int) innerRadius;
+            float borderWidth = 10f;
+            float innerRadius = radius -borderWidth;
+
+            float innerAABB_sideLength = (float) ((innerRadius *2) /Math.sqrt(2));
+            float innerAABB_halfSideLength = innerAABB_sideLength /2;
+            AxisAlignedBoundingBox_Negate innerAABB = new AxisAlignedBoundingBox_Negate(posX -innerAABB_halfSideLength, posX +innerAABB_halfSideLength, posY -innerAABB_halfSideLength, posY +innerAABB_halfSideLength, width, height); // this AABB is a NEGATION. we DONT want to draw in here. just adding this note for future reference.
+
+            float radiusSquared = radius *radius;
+            float innerRadiusSquared = innerRadius *innerRadius;
 
             long totalColourAnimationTime = 2000L; // in millis
             float colourProgress = System.currentTimeMillis() %totalColourAnimationTime /((float) totalColourAnimationTime); // 0 to 1
-            Color circleColour = Color.getHSBColor(colourProgress, 1, 1);
+            int circleColour = Color.getHSBColor(colourProgress, 1, 1).getRGB();
 
             // now draw each pixel
 
-            HashMap<Integer, ArrayList<Integer>> mainCircle = CircleHelper.getCircle(radius_INT);
-            HashMap<Integer, ArrayList<Integer>> innerCircle = CircleHelper.getCircle(innerRadius_INT);
-
-//            // draw outer circle piece first
-//            for (Integer relativeX : mainCircle.keySet()) {
-//                for (Integer relativeY : mainCircle.get(relativeX)) {
-//                    graphicsJPanel.drawPixel(posX +relativeX, posY -relativeY, Color.WHITE);
-//                }
-//            }
-//
-//            // draw inner circle piece next
-//            for (Integer relativeX : innerCircle.keySet()) {
-//                for (Integer relativeY : innerCircle.get(relativeX)) {
-//                    graphicsJPanel.drawPixel(posX +relativeX, posY -relativeY, Color.WHITE);
-//                }
-//            }
-
-            // fill in the circle including the 2 circles themselves.
-            graphicsJPanel.bufferedImage_graphics2D.setColor(circleColour);
-
-            // fill in left side
-            for (int x = posX -((int) radius); x <= posX -((int) innerRadius); x++) {
-                Integer highestY = null;
-                Integer lowestY = null;
-                for (Integer y : mainCircle.get(x -posX)) {
-                    if (highestY == null || lowestY == null) {
-                        highestY = y;
-                        lowestY = y;
-                    } else {
-                        if (y > highestY) {
-                            highestY = y;
-                        } else if (y < lowestY) {
-                            lowestY = y;
-                        }
-                    }
-                }
-                if (highestY != null && lowestY != null) {
-                    graphicsJPanel.bufferedImage_graphics2D.drawLine(x, posY -highestY, x, posY -lowestY);
+            // left part of hollow AABB
+            for (int x = mainAABB.getxMin_INT_clamped(); x <= innerAABB.getxMin_INT_clamped(); x++) {
+                for (int y = mainAABB.getyMin_INT_clamped(); y <= mainAABB.getyMax_INT_clamped(); y++) {
+                    shader_hollowCircle(x, y, posX, posY, radiusSquared, innerRadiusSquared, graphicsJPanel, circleColour, Color.getHSBColor(0f, 1f, .1f).getRGB());
                 }
             }
-
-            // fill in right side
-            for (int x = posX +((int) innerRadius); x <= posX +((int) radius); x++) {
-                Integer highestY = null;
-                Integer lowestY = null;
-                for (Integer y : mainCircle.get(x -posX)) {
-                    if (highestY == null || lowestY == null) {
-                        highestY = y;
-                        lowestY = y;
-                    } else {
-                        if (y > highestY) {
-                            highestY = y;
-                        } else if (y < lowestY) {
-                            lowestY = y;
-                        }
-                    }
-                }
-                if (highestY != null && lowestY != null) {
-                    graphicsJPanel.bufferedImage_graphics2D.drawLine(x, posY -highestY, x, posY -lowestY);
+            // right part of hollow AABB
+            for (int x = innerAABB.getxMax_INT_clamped(); x <= mainAABB.getxMax_INT_clamped(); x++) {
+                for (int y = mainAABB.getyMin_INT_clamped(); y <= mainAABB.getyMax_INT_clamped(); y++) {
+                    shader_hollowCircle(x, y, posX, posY, radiusSquared, innerRadiusSquared, graphicsJPanel, circleColour, Color.getHSBColor(.25f, 1f, .1f).getRGB());
                 }
             }
-
-            // fill in top side
-            for (int x = posX -(innerRadius_INT) +1; x <= posX +(innerRadius_INT) -1; x++) {
-                Integer outermostMainY = null; // outermost relative to the inside of the lines. i want to colour the circle points themselves.
-                Integer outermostInnerY = null;
-                for (Integer y : mainCircle.get(x -posX)) {
-                    if (outermostMainY == null) {
-                        outermostMainY = y;
-                    } else {
-                        if (y > outermostMainY) {
-                            outermostMainY = y;
-                        }
-                    }
-                }
-                for (Integer y : innerCircle.get(x -posX)) {
-                    if (y < 0) {
-                        continue;
-                    }
-                    if (outermostInnerY == null) {
-                        outermostInnerY = y;
-                    } else {
-                        if (y < outermostInnerY) {
-                            outermostInnerY = y;
-                        }
-                    }
-                }
-                if (outermostMainY != null && outermostInnerY != null) {
-                    graphicsJPanel.bufferedImage_graphics2D.drawLine(x, posY -outermostMainY, x, posY -outermostInnerY);
+            // top part of hollow AABB
+            for (int x = innerAABB.getxMin_INT_clamped() +1; x <= innerAABB.getxMax_INT_clamped() -1; x++) { // the +1 and -1 are because when the left and right parts are drawn, it INCLUDES the mins and maxes. for example, since the innerAABB xMin was ALREADY drawn, we have to add 1 to get the STARTING x of the top and bottom parts.
+                for (int y = mainAABB.getyMin_INT_clamped(); y <= innerAABB.getyMin_INT_clamped(); y++) {
+                    shader_hollowCircle(x, y, posX, posY, radiusSquared, innerRadiusSquared, graphicsJPanel, circleColour, Color.getHSBColor(.5f, 1f, .1f).getRGB());
                 }
             }
-
-            // fill in bottom side
-            for (int x = posX -(innerRadius_INT) +1; x <= posX +(innerRadius_INT) -1; x++) {
-                Integer outermostMainY = null;
-                Integer outermostInnerY = null;
-                for (Integer y : mainCircle.get(x -posX)) {
-                    if (outermostMainY == null) {
-                        outermostMainY = y;
-                    } else {
-                        if (y < outermostMainY) {
-                            outermostMainY = y;
-                        }
-                    }
-                }
-                for (Integer y : innerCircle.get(x -posX)) {
-                    if (y > 0) {
-                        continue;
-                    }
-                    if (outermostInnerY == null) {
-                        outermostInnerY = y;
-                    } else {
-                        if (y > outermostInnerY) {
-                            outermostInnerY = y;
-                        }
-                    }
-                }
-                if (outermostMainY != null && outermostInnerY != null) {
-                    graphicsJPanel.bufferedImage_graphics2D.drawLine(x, posY -outermostInnerY, x, posY -outermostMainY);
+            // bottom part of hollow AABB
+            for (int x = innerAABB.getxMin_INT_clamped() +1; x <= innerAABB.getxMax_INT_clamped() -1; x++) {
+                for (int y = innerAABB.getyMax_INT_clamped(); y <= mainAABB.getyMax_INT_clamped(); y++) {
+                    shader_hollowCircle(x, y, posX, posY, radiusSquared, innerRadiusSquared, graphicsJPanel, circleColour, Color.getHSBColor(.75f, 1f, .1f).getRGB());
                 }
             }
 
@@ -199,6 +105,18 @@ public class Main {
 
         }
 
+    }
+
+    // this just calculates the colour of a pixel, the way an openGL shader would. if its part of the circle, it uses the circle's colour. if not, it uses the "background" colour, which is really a secondary background colour because i wanted to draw the REAL background and the bounding box colours differently :)
+    public static void shader_hollowCircle(int x, int y, int posX, int posY, float radiusSquared, float innerRadiusSquared, GraphicsJPanel graphicsJPanel, int circleColour, int backgroundColour) {
+        int distanceX = x -posX;
+        int distanceY = y -posY;
+        float distanceSquared = (distanceX *distanceX) +(distanceY *distanceY);
+        if (distanceSquared < radiusSquared && distanceSquared > innerRadiusSquared) {
+            graphicsJPanel.drawPixel(x, y, circleColour);
+        } else { // show the AABB, just cuz its cool. OVER 3.3 MILLION CALCULATIONS ON AVERAGE PER FRAME THROWN OUT THE WINDOW :D
+            graphicsJPanel.drawPixel(x, y, backgroundColour);
+        }
     }
 
 }
