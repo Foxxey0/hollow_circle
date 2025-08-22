@@ -1,0 +1,1 @@
+nvcc Init.c Window.c CudaStuff.cu -o testDLL.dll --shared

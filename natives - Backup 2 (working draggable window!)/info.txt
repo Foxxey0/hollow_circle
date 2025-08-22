@@ -1,0 +1,34 @@
+to load dll from other c file:
+    "gcc -o test3 -L. -ltest2 test3.c"
+    in c, you dont load a dll. you include headerfiles that act as a "promise" that the functions will exist in the final exe, and then when you create the exe using "gcc -o final thing.c", you link the dll.
+    natives.test2.dll is the dll and test3 is using a function from it. "gcc -o test3 -L. -ltest2 test3.c"
+    -L. sets the linker directory in "." which is current directory, and "-ltest2" links the specific dll. dont add .dll there, it only needs the name without the extension.
+
+to create the DLL from c file:
+    "gcc -o natives.test2.dll -shared natives.test2.c" this simply makes a dll out of the c file. "-shared" is important. since this is a DLL, meaning its meant to be a LIBRARY meaning its meant to
+    be used by OTHER PROGRAMS, it means we dont NEED to create a fully linked program. so when we do "-shared", which is exactly what it sounds like, it tells the
+    compiler that its meant to be shared, and it WONT link it with other stuff. it ONLY puts together the files themselves (the dll c programm and any includes/header files,
+    i dont know for sure.). meaning when paired with another program that uses it, that program fills in the gaps because it IS a fully-functioning program so it should have
+    everything that the DLL needs to function.
+
+the "-shared" option makes makes it compile without linking other libraries. it only puts in the compiled code itself. this is meant for DLLs which cannot be ran on their own,
+they require another program to run it. this calling program will fill in the spaces and have the necessary libraries for the dll to work. this prevents libraries from
+being compiles multiple times. the DLL doesnt need these libraries.
+
+the "-fPIC" option ensures the DLL code is position independent code, which means all the memory addresses are relative, which is safe and lets it be put anywhere in RAM.
+FPIC WONT WORK ON WINDOWS. windows does it differently. it uses relocation. every memory address in the DLL with have an initial value, with all the variables having a 
+relative address thats an offset from the starting memory address, but when the DLL is loaded into RAM, the memory addresses might all by remapped if the memory is already
+taken. i guess windows does this automatically, so i dont need an option. though, im confused as to why gcc has that option if it doesnt even work on windows.
+
+when making DLL, use "gcc test2.c -o test2.dll -shared"
+
+when making CUDA (C) dll, use "nvcc TestDLL.cu -o TestDLL.dll --shared". nvcc uses cl.exe compiler. it refuses to use gcc on windows. thats okay.
+
+
+CUDA IS C++. i know cuz the extern thing only seems to work on C++, and it works on .cu files, not .c files.
+
+- you dont have to include header files during compilation. its pointless. basically, any file that includes a header file just gets that line replaces by the entire header file content. so compiling a header file is equivilent to creating an empty c stub and including the header file. pointless.
+
+for win32 stuff:
+    - convention is to always use generic names. dont add the A or W yourself. this leaves 2 options for many things. Ex. registerWindow vs registerWindowEX. choose ex, its newer.
+    

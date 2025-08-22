@@ -1,0 +1,1 @@
+nvcc Init.c Window.cu MathHelper.c CudaStuff.cu -o testDLL.dll --shared -rdc=true
